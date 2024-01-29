@@ -5,4 +5,10 @@
     <item
         android:id="@+id/add_student"
         android:title="ADD STUDENT"/>
+    <item
+        android:id="@+id/show_calender"
+        android:title="CHANGE DATE"/>
+    <item
+        android:id="@+id/show_attendance_sheet"
+        android:title="ATTENDANCE SHEET"/>
 </menu>

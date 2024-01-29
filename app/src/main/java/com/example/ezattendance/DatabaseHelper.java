@@ -33,17 +33,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     //Student Table
 
     private static final String STUDENT_TABLE_NAME="STUDENT_TABLE";
-    private static final String S_ID="_SID";
-    private static final String STUDENT_NAME="STUDENT_NAME";
-    private static final String ROLL="ROLL";
+    public static final String S_ID="_SID";
+    public static final String STUDENT_NAME_KEY="STUDENT_NAME";
+    public static final String STUDENT_ROLL_KEY="ROLL";
 
     private static final String CREATE_STUDENT_TABLE=
             "CREATE TABLE " + STUDENT_TABLE_NAME +
             "( " +
             S_ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
             C_ID + " INTEGER NOT NULL," +
-            STUDENT_NAME +" TEXT NOT NULL," +
-            ROLL +" INTEGER NOT NULL, " +
+            STUDENT_NAME_KEY +" TEXT NOT NULL," +
+            STUDENT_ROLL_KEY +" INTEGER NOT NULL, " +
             " FOREIGN KEY ( " + C_ID + ") REFERENCES " + CLASS_TABLE_NAME + "(" + C_ID + ")" + ")";
 
     private static final String DROP_STUDENT_TABLE=" DROP TABLE IF EXISTS " + STUDENT_TABLE_NAME;
@@ -51,18 +51,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     //Status Table
     private static final String STATUS_TABLE_NAME="STATUS_TABLE";
-    private static final String STATUS_ID="_STATUS_ID";
-    private static final String DATE_KEY="STATUS_DATE";
-    private static final String STATUS_KEY="STATUS";
+    public static final String STATUS_ID="_STATUS_ID";
+    public static final String DATE_KEY="STATUS_DATE";
+    public static final String STATUS_KEY="STATUS";
 
     private static final String CREATE_STATUS_TABLE=
             "CREATE TABLE " + STATUS_TABLE_NAME +
                     "( "+
                     STATUS_ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"+
                     S_ID + " INTEGER NOT NULL," +
+                    C_ID + " INTEGER NOT NULL,"+
                     DATE_KEY + " DATE NOT NULL," +
                     STATUS_KEY+ " TEXT NOT NULL, " +
-                    " FOREIGN KEY ( " + S_ID + ") REFERENCES " + STUDENT_TABLE_NAME + "(" + S_ID + ")" + ")";
+                    " FOREIGN KEY ( " + S_ID + ") REFERENCES " + STUDENT_TABLE_NAME + "(" + S_ID + ")," +
+                    " FOREIGN KEY ( " + C_ID + ") REFERENCES " + CLASS_TABLE_NAME + "(" + C_ID + ")"+
+                    ")";
 
     private static final String DROP_STATUS_TABLE=" DROP TABLE IF EXISTS " + STATUS_TABLE_NAME;
     private static final String SELECT_STATUS_TABLE=" SELECT * FROM " + STATUS_TABLE_NAME;
@@ -75,13 +78,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        db.execSQL(CREATE_CLASS_TABLE);
+        sqLiteDatabase.execSQL(CREATE_CLASS_TABLE);
+        sqLiteDatabase.execSQL(CREATE_STUDENT_TABLE);
+        sqLiteDatabase.execSQL(CREATE_STATUS_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
         try{
             db.execSQL(DROP_CLASS_TABLE);
+            db.execSQL(DROP_STUDENT_TABLE);
         }
         catch(SQLException e){
             e.printStackTrace();
@@ -114,6 +120,71 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         return database.update(CLASS_TABLE_NAME,values,C_ID + "=?",new String[]{String.valueOf(cid)});
     }
+
+
+    long addStudent(long cid, int roll, String name){
+        SQLiteDatabase database=this.getWritableDatabase();
+        ContentValues values=new ContentValues();
+        values.put(C_ID,cid);
+        values.put(STUDENT_ROLL_KEY,roll);
+        values.put(STUDENT_NAME_KEY,name);
+        return database.insert(STUDENT_TABLE_NAME, null, values);
+    }
+
+    public Cursor getStudentTable(long cid){
+        SQLiteDatabase database= this.getReadableDatabase();
+        return database.query(STUDENT_TABLE_NAME, null, C_ID + "=?",new String[]{String.valueOf(cid)},null,null, STUDENT_ROLL_KEY);
+    }
+
+    int deleteStudent(long sid){
+        SQLiteDatabase database= this.getReadableDatabase();
+        return database.delete(STUDENT_TABLE_NAME, S_ID + "=?",new String[]{String.valueOf(sid)});
+    }
+
+    long updateStudent(long sid, String name){
+        SQLiteDatabase database=this.getWritableDatabase();
+        ContentValues values=new ContentValues();
+        values.put(STUDENT_NAME_KEY,name);
+        return database.update(STUDENT_TABLE_NAME, values,S_ID + "=?",new String[]{String.valueOf(sid)});
+
+    }
+
+    long addStatus(long sid, long cid, String date, String status){
+        SQLiteDatabase database=this.getWritableDatabase();
+        ContentValues values=new ContentValues();
+        values.put(S_ID,sid);
+        values.put(C_ID,cid);
+        values.put(DATE_KEY,date);
+        values.put(STATUS_KEY,status);
+        return database.insert(STATUS_TABLE_NAME,null,values);
+    }
+
+    long updateStatus(long sid, String date, String status){
+        SQLiteDatabase database=this.getWritableDatabase();
+        ContentValues values=new ContentValues();
+        values.put(STATUS_KEY,status);
+        String whereClause= DATE_KEY + "='" + date + "' AND " + S_ID + "=" + sid;
+        return database.update(STATUS_TABLE_NAME,values,whereClause, null);
+
+
+    }
+
+    String getStatus(long sid, String date){
+        String status=null;
+        SQLiteDatabase database=this.getReadableDatabase();
+        String whereClause= DATE_KEY + "='" + date+ "' AND " + S_ID + "=" + sid;
+        Cursor cursor=database.query(STATUS_TABLE_NAME,null,whereClause,null,null,null,null);
+        if(cursor.moveToFirst()){
+            status=cursor.getString(cursor.getColumnIndex(STATUS_KEY));
+        }
+        return status;
+    }
+
+    Cursor getDistinctMonths(long cid){
+        SQLiteDatabase database=this.getReadableDatabase();
+        return database.query(STATUS_TABLE_NAME, new String[]{DATE_KEY},C_ID + "=" + cid,null,"substr(" + DATE_KEY +", 0,3)|| substr("+ DATE_KEY + ",-4)",null,null);
+    }
+
 
 
 }
