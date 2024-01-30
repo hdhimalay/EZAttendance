@@ -1,18 +1,20 @@
 package com.example.ezattendance;
 
 import androidx.appcompat.app.AppCompatActivity;
+import java.util.Calendar;
+import java.util.Date;
+import androidx.appcompat.app.AppCompatActivity;
 
+import java.text.ParseException;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
 
-import android.graphics.Color;
-import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-import java.util.Calendar;
-
 
 public class SheetActivity extends AppCompatActivity {
 
@@ -23,7 +25,6 @@ public class SheetActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sheet);
         long[] idArray = getIntent().getLongArrayExtra("idArray");
-
         rowSize = idArray.length + 1;
 
         showTable();
@@ -36,8 +37,6 @@ public class SheetActivity extends AppCompatActivity {
         int[] rollArray = getIntent().getIntArrayExtra("rollArray");
         String[] nameArray = getIntent().getStringArrayExtra("nameArray");
         String month = getIntent().getStringExtra("month");
-
-        int DAY_IN_MONTH = getDayInMonth(month);
 
         TableRow[] rows = new TableRow[rowSize];
         TextView[] roll_textview = new TextView[rowSize];
@@ -109,7 +108,6 @@ public class SheetActivity extends AppCompatActivity {
 
     }
 
-
     private int getDayInMonth(String month) {
 
         try {
@@ -137,15 +135,5 @@ public class SheetActivity extends AppCompatActivity {
                 return i;
             }
         }
-
-        // Handle the case when the month abbreviation is not recognized
-        throw new IllegalArgumentException("Invalid month abbreviation: " + monthAbbreviation);
     }
-
-
 }
-
-
-
-
-

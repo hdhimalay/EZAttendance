@@ -169,7 +169,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     }
 
-    String getStatus(long sid, String date){
+    public String getStatus(long sid, String date){
         String status=null;
         SQLiteDatabase database=this.getReadableDatabase();
         String whereClause= DATE_KEY + "='" + date+ "' AND " + S_ID + "=" + sid;
