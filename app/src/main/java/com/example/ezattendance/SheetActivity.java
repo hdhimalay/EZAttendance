@@ -1,20 +1,17 @@
 package com.example.ezattendance;
 
 import androidx.appcompat.app.AppCompatActivity;
-import java.util.Calendar;
-import java.util.Date;
-import androidx.appcompat.app.AppCompatActivity;
 
-import java.text.ParseException;
-import java.time.LocalDate;
-import java.time.Month;
-import java.time.format.DateTimeFormatter;
-
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+
+import java.util.Calendar;
+
 
 public class SheetActivity extends AppCompatActivity {
 
@@ -25,6 +22,8 @@ public class SheetActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sheet);
         long[] idArray = getIntent().getLongArrayExtra("idArray");
+
+        // Set rowSize based on the length of idArray
         rowSize = idArray.length + 1;
 
         showTable();
@@ -37,6 +36,8 @@ public class SheetActivity extends AppCompatActivity {
         int[] rollArray = getIntent().getIntArrayExtra("rollArray");
         String[] nameArray = getIntent().getStringArrayExtra("nameArray");
         String month = getIntent().getStringExtra("month");
+
+        int DAY_IN_MONTH = getDayInMonth(month);
 
         TableRow[] rows = new TableRow[rowSize];
         TextView[] roll_textview = new TextView[rowSize];
@@ -67,16 +68,14 @@ public class SheetActivity extends AppCompatActivity {
             name_textview[i].setText(nameArray[i - 1]);
 
             for (int j = 1; j <= DAY_IN_MONTH; j++) {
-                String day = month.substring(0, 3) + " " + String.format("%02d", j) + ", " + month.substring(4);
+                // Format the day as "APR 1, 2024"
+                String day = month.substring(0, 3) + " " + j + ", " + month.substring(4);
 
-                LocalDate localDate = LocalDate.of(Integer.parseInt(month.substring(4)), getMonthIndex(month.substring(0, 3)), j);
-                String formattedDate = localDate.format(DateTimeFormatter.ofPattern("MM.dd.yyyy"));
+                String date = String.format("%02d", j) + "." + month.substring(0, 3) + month.substring(4);
 
-                String status = databaseHelper.getStatus(idArray[i - 1], formattedDate);
+                String status = databaseHelper.getStatus(idArray[i - 1], date);
                 status_textview[i][j].setText(status);
             }
-
-
 
         }
 
@@ -109,7 +108,6 @@ public class SheetActivity extends AppCompatActivity {
     }
 
     private int getDayInMonth(String month) {
-
         try {
             String[] parts = month.split("\\.");
             int year = Integer.parseInt(parts[1]);
@@ -135,5 +133,14 @@ public class SheetActivity extends AppCompatActivity {
                 return i;
             }
         }
+
+        // Handle the case when the month abbreviation is not recognized
+        throw new IllegalArgumentException("Invalid month abbreviation: " + monthAbbreviation);
     }
+
 }
+
+
+
+
+

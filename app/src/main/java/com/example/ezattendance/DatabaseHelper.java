@@ -6,7 +6,8 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
+import android.util.Log;
+import android.text.TextUtils;
 import androidx.annotation.Nullable;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
@@ -86,8 +87,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
         try{
-            db.execSQL(DROP_CLASS_TABLE);
-            db.execSQL(DROP_STUDENT_TABLE);
+            sqLiteDatabase.execSQL(DROP_CLASS_TABLE);
+            sqLiteDatabase.execSQL(DROP_STUDENT_TABLE);
+            sqLiteDatabase.execSQL(DROP_STATUS_TABLE);
+            onCreate(sqLiteDatabase);
         }
         catch(SQLException e){
             e.printStackTrace();
@@ -169,7 +172,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     }
 
-    public String getStatus(long sid, String date){
+    String getStatus(long sid, String date){
         String status=null;
         SQLiteDatabase database=this.getReadableDatabase();
         String whereClause= DATE_KEY + "='" + date+ "' AND " + S_ID + "=" + sid;
@@ -184,6 +187,66 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase database=this.getReadableDatabase();
         return database.query(STATUS_TABLE_NAME, new String[]{DATE_KEY},C_ID + "=" + cid,null,"substr(" + DATE_KEY +", 0,3)|| substr("+ DATE_KEY + ",-4)",null,null);
     }
+    public Cursor getAttendanceDataForMonth(long classId, String month) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String[] projection = {
+                STUDENT_TABLE_NAME + "." + STUDENT_ROLL_KEY,
+                STUDENT_TABLE_NAME + "." + STUDENT_NAME_KEY,
+                STATUS_TABLE_NAME + "." + DATE_KEY,
+                STATUS_TABLE_NAME + "." + STATUS_KEY
+        };
+
+        String selection =
+                CLASS_TABLE_NAME + "." + C_ID + " = ? AND " +
+                        "strftime('%Y-%m', " + STATUS_TABLE_NAME + "." + DATE_KEY + ") = ?";
+
+        String[] selectionArgs = {String.valueOf(classId), month};
+
+        String tables =
+                STATUS_TABLE_NAME +
+                        " INNER JOIN " + STUDENT_TABLE_NAME +
+                        " ON " + STATUS_TABLE_NAME + "." + S_ID + " = " + STUDENT_TABLE_NAME + "." + S_ID +
+                        " INNER JOIN " + CLASS_TABLE_NAME +
+                        " ON " + STUDENT_TABLE_NAME + "." + C_ID + " = " + CLASS_TABLE_NAME + "." + C_ID;
+
+        String query = "SELECT " + TextUtils.join(", ", projection) +
+                " FROM " + tables +
+                " WHERE " + selection;
+
+        Log.d("SheetListActivity", "SQL Query: " + query);
+        Log.d("SheetListActivity", "Class ID: " + classId + ", Month: " + month);
+
+        Cursor cursor = db.query(
+                tables,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                STATUS_TABLE_NAME + "." + DATE_KEY
+        );
+
+        if (cursor == null) {
+            Log.e("SheetListActivity", "Cursor is null for month: " + month);
+        } else {
+            Log.d("SheetListActivity", "Cursor count for month " + month + ": " + cursor.getCount());
+            if (cursor.moveToFirst()) {
+                do {
+                    // Log each row of the cursor
+                    Log.d("SheetListActivity", "Row: " +
+                            cursor.getInt(cursor.getColumnIndex(STUDENT_TABLE_NAME + "." + STUDENT_ROLL_KEY)) + ", " +
+                            cursor.getString(cursor.getColumnIndex(STUDENT_TABLE_NAME + "." + STUDENT_NAME_KEY)) + ", " +
+                            cursor.getString(cursor.getColumnIndex(STATUS_TABLE_NAME + "." + DATE_KEY)) + ", " +
+                            cursor.getString(cursor.getColumnIndex(STATUS_TABLE_NAME + "." + STATUS_KEY)));
+                } while (cursor.moveToNext());
+            }
+        }
+
+        return cursor;
+    }
+
+
 
 
 
